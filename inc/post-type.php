@@ -358,7 +358,7 @@ function io_save_quick_edit_data($post_id) {
     if (isset($_POST['ordinal']) && ($post->post_type != 'revision')) {
         $left_menu_id = esc_attr($_POST['ordinal']);
         if ($left_menu_id)
-			update_post_meta( $post_id, '_sites_order', $left_menu_id);// ‘_sites_order’为自定义字段
+			update_post_meta( $post_id, '_sites_order', $left_menu_id);// '_sites_order'为自定义字段
     } 
 }
 
@@ -413,4 +413,85 @@ function ashuwp_quick_edit_javascript() {
     </script>";
 	} 
 }
+
+// --- 新增：为 "sites" 文章类型添加 Favicon 获取 Metabox ---
+add_action('add_meta_boxes', 'io_add_favicon_metabox');
+
+function io_add_favicon_metabox() {
+    add_meta_box(
+        'io_favicon_fetcher', // Metabox ID
+        __('获取 Favicon', 'i_theme'), // Metabox 标题
+        'io_favicon_metabox_content', // 回调函数，输出 Metabox 内容
+        'sites', // 在哪个 Post Type 显示
+        'side', // 显示在侧边栏 ('normal', 'side', 'advanced')
+        'low' // 优先级 ('high', 'core', 'default', 'low')
+    );
+}
+
+// Metabox 内容回调函数
+function io_favicon_metabox_content($post) {
+    // 生成并输出 Nonce 字段用于 AJAX 安全验证
+    wp_nonce_field('fetch_favicon_nonce', 'fetch_favicon_nonce_field');
+
+    // 获取当前图标 URL (从 _thumbnail 字段)
+    $current_favicon_url = get_post_meta($post->ID, '_thumbnail', true);
+    $default_ico = get_theme_file_uri('/images/favicon.png');
+    $icon_to_display = !empty($current_favicon_url) ? esc_url($current_favicon_url) : $default_ico;
+
+    // 获取目标网址 (_sites_link 字段)
+    $site_url = get_post_meta($post->ID, '_sites_link', true);
+
+    ?>
+    <div id="favicon-fetcher-wrapper">
+        <p>
+            <label for="site-url-display">目标网址：</label><br>
+            <input type="text" id="site-url-display" value="<?php echo esc_attr($site_url); ?>" readonly style="width: 100%; background-color: #eee;">
+            <small><i>网址在上方"网址链接属性"框中编辑。</i></small>
+        </p>
+        <div style="margin-bottom: 10px;">
+            <span>当前图标预览：</span><br>
+            <img id="favicon-preview" src="<?php echo $icon_to_display; ?>" alt="Favicon Preview" width="32" height="32" style="vertical-align: middle; margin-right: 5px; border: 1px solid #ddd;">
+        </div>
+        <button type="button" id="fetch-favicon-button" class="button">
+            <?php _e('尝试获取 Favicon', 'i_theme'); ?>
+        </button>
+        <span id="favicon-fetch-spinner" class="spinner" style="float: none; vertical-align: middle;"></span>
+        <div id="favicon-status-message" style="margin-top: 8px;"></div>
+    </div>
+    <?php
+}
+
+// --- 新增：为 Favicon 获取功能加载后台脚本 ---
+add_action('admin_enqueue_scripts', 'io_enqueue_favicon_fetcher_script');
+
+function io_enqueue_favicon_fetcher_script($hook) {
+    global $post;
+
+    // 确保只在编辑 'sites' 文章类型的页面加载
+    if ($hook == 'post-new.php' || $hook == 'post.php') {
+        if (isset($post->post_type) && $post->post_type === 'sites') {
+            // 加载 JS 文件
+            wp_enqueue_script(
+                'io-admin-favicon', // 脚本句柄
+                get_theme_file_uri('/js/admin-favicon.js'), // JS 文件 URL
+                ['jquery', 'wp-data'], // 依赖项
+                '0.0.3', // 版本号 (使用固定版本号避免 filemtime 警告)
+                true // 在 footer 加载
+            );
+
+            // 传递数据给 JavaScript (特别是 Post ID，用于经典编辑器兼容)
+            wp_localize_script('io-admin-favicon', 'admin_favicon_params', [
+                'post_id' => isset($post->ID) ? $post->ID : 0,
+                // 如果需要，可以传递 ajaxurl，但通常 ajaxurl 是全局可用的
+                // 'ajax_url' => admin_url('admin-ajax.php') 
+            ]);
+        }
+    }
+}
+// --- 结束：加载后台脚本 ---
+
+// --- 结束：添加 Favicon 获取 Metabox ---
+
+// 网址标签
+// add_action( 'init', 'create_sites_tag_taxonomies', 0 ); // <--- Removed this line causing fatal error
 
