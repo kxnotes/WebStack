@@ -66,7 +66,7 @@ include( 'templates/header-nav.php' );
                                         }
                                     }
                                     ?>
-                                    <div class="site-name h3"><?php echo $sitetitle ?></div>
+                                    <div class="site-name h1"><?php echo $sitetitle ?></div>
                                     <div class="mt-2">
                                 
                                             <p><?php echo get_post_meta(get_the_ID(), '_sites_sescribe', true) ?></p>
