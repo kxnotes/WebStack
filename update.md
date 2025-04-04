@@ -35,6 +35,29 @@
 
 # 更新日志
 
+## 版本 0.0.2 (YYYY-MM-DD)
+
+- **文件**: `css/nav.css`
+- **修改**: 
+    - 调整了搜索框容器 (`#search`) 的外边距。
+    - 桌面端默认 `margin` 设置为 `80px auto 14px`。
+    - 添加了媒体查询 (`@media screen and (max-width: 767px)`)，为移动端设置 `margin` 为 `30px 15px 14px`。
+
+## 版本 0.0.1 (YYYY-MM-DD)
+
+- **文件**: `search-tool.php`, `css/nav.css`
+- **修改**: 
+    - **PHP (`search-tool.php`)**: 
+        - 移除了顶部的多分类导航（常用、搜索、工具等）。
+        - 精简了搜索引擎列表，仅保留 Bing、Google、站内搜索、百度。
+        - 调整了搜索引擎的显示顺序为：Bing、Google、站内、百度。
+        - 设置 Bing 为默认选中的搜索引擎。
+        - 简化了相关的 JavaScript 代码，移除了分类处理逻辑，优化了初始化和状态保存（仅针对引擎选择和新窗口设置）。
+    - **CSS (`css/nav.css`)**: 
+        - 更新了搜索区域的 CSS 选择器，以匹配修改后的 HTML 结构（移除 `.search-group` 层级）。
+        - 确保搜索引擎列表 (`#search-list .search-type li`) 恢复水平排列。
+        - 添加了 `text-align: center` 样式，使搜索引擎链接居中显示。
+
 ## v0.0.5 (YYYY-MM-DD)
 
 - **样式**: 修改网站详情页图标 (`.siteico`) 样式。
