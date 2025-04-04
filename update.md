@@ -35,6 +35,11 @@
 
 # 更新日志
 
+## 版本 0.0.2 (2024-08-03)
+
+- **文件**: `header.php`
+- **修复**: 移除了非首页 `<title>` 标签中重复输出网站名称 (`bloginfo('name')`) 的问题，解决标题显示为 "文章名 - 网站名网站名" 的错误。
+
 ## 版本 0.0.2 (YYYY-MM-DD)
 
 - **文件**: `css/nav.css`
@@ -86,4 +91,16 @@
 
 - **修复**: 修复了通过 AJAX 获取 Favicon 后，图标 URL 未同步更新到文章编辑页面的 `_thumbnail` 输入框，导致保存文章时图标丢失的问题。
 - **文件修改**: 
-    - `js/admin-favicon.js`: 在 AJAX 成功回调中添加了更新 `input[name="sites_meta[_thumbnail]"]` 值的代码。 
+    - `js/admin-favicon.js`: 在 AJAX 成功回调中添加了更新 `input[name="sites_meta[_thumbnail]"]` 值的代码。
+
+# 更新记录
+
+## 版本 0.0.1 (YYYY-MM-DD)
+
+- **文件:** `header.php`
+- **修改:** 注释掉主题自带的 SEO 相关元标签输出（包括 title, keywords, description, Open Graph, favicon, apple-touch-icon），以避免与 Rank Math 插件冲突。
+
+## 版本 0.0.2 (YYYY-MM-DD)
+
+- **文件:** `templates/header-banner.php`
+- **修改:** 注释掉顶部的天气插件代码。 
