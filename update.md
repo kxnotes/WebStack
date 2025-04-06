@@ -111,4 +111,26 @@
 - **修改:** 添加自定义代码，修改 WordPress 图片上传逻辑：
   - 如果原图宽度 > 1200px，只额外生成 300px 宽度的版本。
   - 如果原图宽度 <= 1200px，不生成任何额外尺寸。
-  - 目标是取代图片优化插件，精确控制生成的尺寸，减少冗余文件。 
+  - 目标是取代图片优化插件，精确控制生成的尺寸，减少冗余文件。
+
+## 版本 0.0.4 (YYYY-MM-DD)
+
+- **文件:** `header.php`
+- **修改:** 在 `<head>` 部分添加了 `<link rel="preload">` 标签，用于预加载核心 CSS (`nav.css`, `font-awesome.min.css`) 和关键字体 (`fontawesome-webfont.woff2`)，以提升页面加载性能。
+
+## 版本 0.0.5 (YYYY-MM-DD)
+
+- **文件:** `index.php`
+- **修改:** 在首页内容区域添加了一个包含网站名称 (`bloginfo('name')`) 的 `<h1>` 标签，并使用 `screen-reader-text` 类在视觉上隐藏它，以满足 SEO 和可访问性要求，同时不影响现有设计。
+
+## 版本 0.0.6 (YYYY-MM-DD)
+
+- **文件:** `inc/fav-content.php`
+- **修改:** 将 `fav_con()` 函数中输出分类标题的 HTML 标签从 `<h4>` 修改为 `<h2>`，以确保首页标题层级的正确性 (`<h1>` -> `<h2>`)。
+
+## 版本 0.0.7 (YYYY-MM-DD)
+
+- **文件:** `functions.php`, `header.php`
+- **修改:** 统一并明确网站语言声明。
+  - 在 `functions.php` 添加过滤器，通过 `language_attributes` 钩子为 `<html>` 标签自动添加 `prefix="og: https://ogp.me/ns#"` 属性。
+  - 在 `header.php` 的 `<head>` 部分添加 `<meta property="og:locale" content="zh_CN" />` 标签。 

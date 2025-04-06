@@ -54,3 +54,15 @@ function filter_intermediate_image_sizes( $sizes, $metadata ) {
     // 如果返回空数组，则不生成任何中间尺寸。
     return $sizes_to_generate;
 }
+
+/**
+ * 3. 为 <html> 标签添加 Open Graph prefix 属性
+ */
+add_filter( 'language_attributes', 'add_opengraph_prefix' );
+function add_opengraph_prefix( $output ) {
+    // 检查是否已经在输出中（虽然不太可能）
+    if (strpos($output, 'prefix=') === false) {
+        $output .= ' prefix="og: https://ogp.me/ns#"';
+    }
+    return $output;
+}

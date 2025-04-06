@@ -15,12 +15,21 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 <head>
 <meta charset="<?php bloginfo( 'charset' ); ?>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<!-- Preload Core CSS -->
+<link rel="preload" href="<?php echo get_theme_file_uri('css/nav.css'); ?>" as="style">
+<link rel="preload" href="<?php echo get_theme_file_uri('css/font-awesome.min.css'); ?>" as="style">
+
+<!-- Preload Core Font -->
+<link rel="preload" href="<?php echo get_theme_file_uri('fonts/fontawesome-webfont.woff2?v=4.7.0'); ?>" as="font" type="font/woff2" crossorigin>
+
 <?php //if ( is_home() || is_front_page() ) : ?>
 <!-- <title><?php //bloginfo('name'); ?> | <?php //bloginfo( 'description');?></title> -->
 <?php //else : ?>
 <!-- <title><?php //wp_title( '|', true, 'right' ); ?></title> -->
 <?php //endif; ?>
 <meta name="theme-color" content="#2C2E2F" />
+<meta property="og:locale" content="zh_CN" />
 <!-- <meta name="keywords" content="<?php //echo io_get_option('seo_home_keywords') ?>"> -->
 <!-- <meta name="description" content="<?php //echo io_get_option('seo_home_desc') ?>"> -->
 <meta property="og:type" content="article">

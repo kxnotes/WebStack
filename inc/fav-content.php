@@ -12,7 +12,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 function fav_con($mid, $visible) { ?>
-        <h4 class="text-gray" style="display: inline-block;"><i class="icon-io-tag" style="margin-right: 27px;" id="term-<?php echo $mid->term_id; ?>"></i><?php echo $mid->name; ?></h4>
+        <h2 class="text-gray" style="display: inline-block;"><i class="icon-io-tag" style="margin-right: 27px;" id="term-<?php echo $mid->term_id; ?>"></i><?php echo $mid->name; ?></h2>
         <?php 
         if($visible == 2){
             echo '<div class="login-notice">'.__('此分类需登陆后查看','i_theme').'</div>';
