@@ -20,8 +20,6 @@ include( 'templates/header-nav.php' );
  
 <?php get_template_part( 'templates/bulletin' ); ?>
 
-<h1 class="screen-reader-text"><?php bloginfo('name'); ?></h1>
-
 <?php
 if(io_get_option('is_search')){include('search-tool.php'); }
 else{?>

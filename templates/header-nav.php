@@ -25,14 +25,14 @@ $categories = get_categories( array(
             <div class="sidebar-menu-inner">
                 <header class="logo-env">
                     <!-- logo -->
-                    <div class="logo">
+                    <h1 class="logo">
                         <a href="<?php bloginfo('url') ?>" class="logo-expanded">
                             <img src="<?php echo io_get_option('logo_normal') ?>" height="40" alt="<?php bloginfo('name') ?>" />
                         </a>
                         <a href="<?php bloginfo('url') ?>" class="logo-collapsed">
                             <img src="<?php echo io_get_option('logo_small') ?>" height="40" alt="<?php bloginfo('name') ?>">
                         </a>
-                    </div>
+                    </h1>
                     <div class="mobile-menu-toggle visible-xs">
                         <a href="#" data-toggle="mobile-menu">
                             <i class="fa fa-bars"></i>

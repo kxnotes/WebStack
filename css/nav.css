@@ -447,3 +447,29 @@ input[type="button"],input[type="submit"]{background-color:#222;border:0;-webkit
 .black .siteico{background:#222}
 .black .posts-nav{color:rgba(221,221,221,.2)}
 .black .input-group-addon{color:#ddd;background:#26282a;border-color:#26282a}
+
+/* 重置 H1 Logo 的样式 */
+h1.logo {
+  margin: 0;
+  padding: 0;
+  font-size: inherit; /* 继承父级字体大小 */
+  line-height: inherit; /* 继承父级行高 */
+  border: none;
+  display: inline-block; /* 或者 block，取决于布局需要 */
+  vertical-align: middle; /* 如果需要垂直居中对齐 */
+}
+h1.logo a,
+h1.logo img {
+  display: block; /* 让图片和链接行为更像块级元素 */
+  border: none; /* 移除可能的边框 */
+  padding: 0; /* 移除可能的内边距 */
+  margin: 0; /* 移除可能的外边距 */
+}
+
+/* 调整分类标题 (H2) 字体大小 */
+.sites-list h2.text-gray {
+  font-size: 18px;
+  /* 可以根据需要调整行高或边距 */
+  /* line-height: 1.4; */
+  /* margin-bottom: 15px; */
+}

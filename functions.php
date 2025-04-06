@@ -3,6 +3,14 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 date_default_timezone_set('Asia/Shanghai');
 require get_template_directory() . '/inc/inc.php';
 
+// 添加主题支持功能
+function webstack_theme_setup() {
+	// 添加主题支持功能
+	// 让 WordPress 管理文档标题。
+	add_theme_support( 'title-tag' );
+}
+add_action( 'after_setup_theme', 'webstack_theme_setup' );
+
    
 //登录页面的LOGO链接为首页链接
 add_filter('login_headerurl',function() {return get_bloginfo('url');});
