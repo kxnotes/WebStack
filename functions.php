@@ -30,6 +30,11 @@ function fanly_remove_block_library_css() {
  */
 add_action( 'after_setup_theme', 'custom_image_sizes_setup' );
 function custom_image_sizes_setup() {
+    // 添加对响应式图片的支持
+    add_theme_support( 'responsive-images' );
+    add_theme_support( 'post-thumbnails' );
+    
+    // 注册自定义图片尺寸
     add_image_size( 'custom-mobile-thumb', 300, 9999 ); // 名称 'custom-mobile-thumb', 宽 300, 高不限
 }
 
@@ -74,3 +79,24 @@ function add_opengraph_prefix( $output ) {
     }
     return $output;
 }
+
+/**
+ * 取消注册不需要的默认图片尺寸
+ * 仅保留 'custom-mobile-thumb' (以及原始 'full' 尺寸)
+ */
+function remove_default_image_sizes( $sizes ) {
+    // 从要生成的尺寸数组中移除不需要的尺寸
+    unset( $sizes['thumbnail']);      // 移除 thumbnail 尺寸
+    unset( $sizes['medium']);         // 移除 medium 尺寸
+    unset( $sizes['medium_large']);   // 移除 medium_large 尺寸
+    unset( $sizes['large']);          // 移除 large 尺寸
+    unset( $sizes['1536x1536']);      // 移除 1536x1536 尺寸
+    unset( $sizes['2048x2048']);      // 移除 2048x2048 尺寸
+    
+    // 如果主题或插件注册了其他你不需要的尺寸，也可以在这里取消注册
+    // 例如: unset( $sizes['some-other-theme-size'] );
+
+    // 返回修改后的尺寸数组，只包含我们想保留的尺寸
+    return $sizes;
+}
+add_filter( 'intermediate_image_sizes_advanced', 'remove_default_image_sizes' );

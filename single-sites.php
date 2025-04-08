@@ -100,7 +100,29 @@ include( 'templates/header-nav.php' );
                             <?php
                             $contentinfo = get_the_content();
                             if ($contentinfo) {
-                                the_content();
+                                // 使用 DOMDocument 解析内容中的图片并添加响应式支持
+                                $content = apply_filters('the_content', $contentinfo);
+                                if(preg_match_all('/<img[^>]+>/i', $content, $matches)) {
+                                    foreach($matches[0] as $img) {
+                                        if(preg_match('/src=["\']([^"\']+)["\']/i', $img, $src)) {
+                                            $img_url = $src[1];
+                                            // 获取附件ID
+                                            $attachment_id = attachment_url_to_postid($img_url);
+                                            if($attachment_id) {
+                                                // 生成响应式图片HTML (修改为请求 'full' 尺寸)
+                                                $responsive_img = wp_get_attachment_image($attachment_id, 'full');
+
+                                                if ($responsive_img) {
+                                                    // 始终直接使用响应式图片，不再添加链接
+                                                    $wrapped_img = $responsive_img;
+                                                    // 替换文章内容中的原始图片标签
+                                                    $content = str_replace($img, $wrapped_img, $content);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                echo $content;
                             } else {
                                 echo get_post_meta(get_the_ID(), '_sites_sescribe', true);
                             }

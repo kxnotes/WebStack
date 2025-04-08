@@ -35,11 +35,42 @@
 
 # 更新日志
 
+## v0.0.5 (YYYY-MM-DD)
+
+- **Bug修复 & 优化**:
+    - **灯箱功能**: 
+        - 修复了移动端 Fancybox 初始化时因工具栏配置导致的 JavaScript 错误 (TypeError: i[t] is not iterable)。
+        - 调整 Fancybox 初始化设置，使用默认工具栏，确保功能稳定运行。
+
+## v0.0.4 (YYYY-MM-DD)
+
+- **功能优化**:
+    - **图片查看体验**:
+        - 优化灯箱功能，现在只在移动端启用
+        - 桌面端直接显示响应式图片，无需点击放大
+    - **性能优化**:
+        - 减少桌面端不必要的 JavaScript 和 CSS 加载
+        - 保持移动端完整的灯箱功能体验
+
+## v0.0.3 (YYYY-MM-DD)
+
+- **功能优化**:
+    - **响应式图片支持**:
+        - 启用 WordPress 原生的响应式图片功能
+        - 优化图片在移动端的加载，自动使用 300px 宽度的缩略图
+    - **图片查看体验**:
+        - 集成 Fancybox 5.0 灯箱功能
+        - 支持图片点击放大、全屏查看
+        - 优化图片加载性能
+    - **代码重构**:
+        - 重写图片处理逻辑，使用 WordPress 标准函数
+        - 添加图片处理相关的钩子函数
+
 ## v0.0.2 (YYYY-MM-DD)
 
 - **结构 & 样式调整**:
     - **`templates/header-nav.php`**: 将 Logo 外层 `div.logo` 修改为 `h1.logo`，使 Logo 成为站点主标题。
-    - **`css/nav.css`**: 
+    - **`css/nav.css`**:
         - 移除了用于隐藏 `h1.screen-reader-text` 的 CSS 规则。
         - 添加了用于重置 `h1.logo` 浏览器默认样式的 CSS 规则，以保持 Logo 外观不变。
     - **`index.php`**: 移除了原有的隐藏的 `h1.screen-reader-text` 标签。

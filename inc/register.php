@@ -19,9 +19,11 @@ function theme_load_scripts() {
 	wp_register_style( 'nav',               THEME_URL.'/css/nav.css', array(), $theme_version );
 
 	wp_register_script( 'bootstrap',        THEME_URL.'/js/bootstrap.min.js', array('jquery'), $theme_version, true );
-	wp_register_script( 'TweenMax',         THEME_URL.'/js/TweenMax.min.js', array('jquery'), $theme_version, true );
+	// 注释掉 TweenMax 脚本的注册
+	// wp_register_script( 'TweenMax',         THEME_URL.'/js/TweenMax.min.js', array('jquery'), $theme_version, true );
 	wp_register_script( 'appjs',            THEME_URL.'/js/app.js', array('jquery'), $theme_version, true );
 	wp_register_script( 'lazyload',         THEME_URL.'/js/lazyload.min.js', array('jquery'), $theme_version, true );
+	// wp_register_script( 'popper',           THEME_URL.'/js/popper.min.js', array('jquery'), $theme_version, true );
 
 	if( !is_admin() )
     {
@@ -34,7 +36,8 @@ function theme_load_scripts() {
 		wp_enqueue_script('jquery');
 
 		wp_enqueue_script('bootstrap');
-		wp_enqueue_script('TweenMax');
+		// 注释掉 TweenMax 脚本的注册
+		// wp_enqueue_script('TweenMax');
 		wp_enqueue_script('appjs'); 
 		
 		if(io_get_option('lazyload')) wp_enqueue_script('lazyload'); 
