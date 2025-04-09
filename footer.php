@@ -119,5 +119,63 @@ if ($police_icp = io_get_option('police_icp')) {
 <!-- 自定义代码 -->
 <?php echo io_get_option('code_2_footer');?>
 <!-- end 自定义代码 -->
+
+<!-- Back to Top Enhancement Styles -->
+<style>
+.go-up {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+  /* Add position styles if not already defined by the theme, e.g.: */
+  /* position: fixed; */
+  /* bottom: 20px; */
+  /* right: 20px; */
+  /* z-index: 1000; */
+}
+.go-up.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+</style>
+
+<!-- Back to Top Enhancement Script -->
+<script type="text/javascript">
+document.addEventListener('DOMContentLoaded', function() {
+  const goTopButton = document.querySelector('a[rel="go-top"]');
+  const goTopContainer = document.querySelector('.go-up'); // Get the container
+
+  if (goTopButton && goTopContainer) {
+    const scrollThreshold = 300; // Pixels to scroll before showing the button
+
+    // Function to check scroll position and toggle visibility
+    const checkScroll = () => {
+      if (window.pageYOffset > scrollThreshold) {
+        goTopContainer.classList.add('is-visible');
+      } else {
+        goTopContainer.classList.remove('is-visible');
+      }
+    };
+
+    // Initial check in case the page loads already scrolled down
+    checkScroll();
+
+    // Listen for scroll events
+    window.addEventListener('scroll', checkScroll);
+
+    // Listen for click events on the button
+    goTopButton.addEventListener('click', function(event) {
+      event.preventDefault(); // Prevent default anchor behavior
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth' // Smooth scroll to top
+      });
+    });
+  } else {
+    // Optional: Log an error if the button or container isn't found
+    // console.error('Back to Top button (a[rel="go-top"]) or container (.go-up) not found.');
+  }
+});
+</script>
+
 </body>
 </html>
