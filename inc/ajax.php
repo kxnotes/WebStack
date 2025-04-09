@@ -447,88 +447,32 @@ function io_download_icon_data($icon_url) {
  */
 function io_save_icon_to_media_library($icon_data, $source_url, $filename) {
     $upload_dir = wp_upload_dir();
-    $filename = sanitize_file_name($filename); // 清理原始文件名
-    $base_filename = pathinfo($filename, PATHINFO_FILENAME);
-    $converted_to_png = false; // 标记是否成功转换
-    $png_data = null; // 存储转换后的 PNG 数据
-
-    // 检查 GD 库
-    if (extension_loaded('gd') && function_exists('imagecreatefromstring')) {
-        $image_resource = @imagecreatefromstring($icon_data);
-
-        if ($image_resource !== false) {
-            // 成功加载图像，尝试转换为 PNG
-            try {
-                $width = imagesx($image_resource);
-                $height = imagesy($image_resource);
-
-                // 创建带透明背景的 PNG 画布
-                $png_image = imagecreatetruecolor($width, $height);
-                imagealphablending($png_image, false);
-                imagesavealpha($png_image, true);
-                $transparent = imagecolorallocatealpha($png_image, 0, 0, 0, 127);
-                imagefill($png_image, 0, 0, $transparent);
-
-                // 将原图复制到新画布
-                imagecopyresampled($png_image, $image_resource, 0, 0, 0, 0, $width, $height, $width, $height);
-
-                // 获取 PNG 输出
-                ob_start();
-                imagepng($png_image);
-                $png_data = ob_get_clean();
-
-                imagedestroy($image_resource);
-                imagedestroy($png_image);
-
-                if ($png_data) {
-                    $icon_data = $png_data; // 使用转换后的 PNG 数据
-                    $converted_to_png = true;
-                    $filename = $base_filename . '.png'; // 确保文件名是 .png
-                } else {
-                    error_log('imagepng() failed for: ' . $source_url);
-                    $filename = $base_filename . '.png'; // 转换失败，仍尝试使用 .png 后缀
-                }
-            } catch (Exception $e) {
-                error_log('GD conversion error for ' . $source_url . ': ' . $e->getMessage());
-                if (isset($image_resource) && is_resource($image_resource)) imagedestroy($image_resource);
-                if (isset($png_image) && is_resource($png_image)) imagedestroy($png_image);
-                $filename = $base_filename . '.png'; // 出错，仍尝试使用 .png 后缀
-            }
-        } else {
-            // imagecreatefromstring 失败 (可能非 GD 支持格式如 SVG, 或损坏)
-            error_log('imagecreatefromstring failed for: ' . $source_url);
-            $filename = $base_filename . '.png'; // 加载失败，仍尝试使用 .png 后缀
-        }
-    } else {
-        // GD 库不可用
-        error_log('GD extension not available for image conversion.');
-        $filename = $base_filename . '.png'; // GD 不可用，仍尝试使用 .png 后缀
-    }
-
+    // 清理原始文件名，保留原始扩展名
+    $filename = sanitize_file_name($filename); 
+    
     // --- 保存文件到媒体库 ---
-    // 使用确保是 .png 后缀的文件名创建唯一文件名
+    // 使用原始（已清理的）文件名创建唯一文件名
     $unique_filename = wp_unique_filename($upload_dir['path'], $filename);
     $filepath = $upload_dir['path'] . '/' . $unique_filename;
 
-    // 将（可能已转换的）图标数据写入文件
+    // 将原始图标数据写入文件
     $saved = file_put_contents($filepath, $icon_data);
     if ($saved === false) {
         return new WP_Error('file_save_error', __('无法保存临时图标文件。', 'i_theme'));
     }
 
     // 准备附件数据
-    $filetype = wp_check_filetype($unique_filename, null);
-    // 如果成功转换或强制使用 .png 后缀，优先使用 image/png
-    $mime_type = ($converted_to_png || pathinfo($unique_filename, PATHINFO_EXTENSION) === 'png') ? 'image/png' : $filetype['type'];
+    // 根据最终保存的文件名（含扩展名）自动检测文件类型
+    $filetype = wp_check_filetype($unique_filename, null); 
+    $mime_type = $filetype['type']; // 直接使用检测到的 MIME 类型
 
-    $attachment_title = preg_replace('/\.[^.]+$/', '', $unique_filename);
-    $attachment_content = $converted_to_png ? 
-                            sprintf(__('Favicon for %s (已转换为 PNG)', 'i_theme'), esc_url($source_url)) :
-                            sprintf(__('Favicon for %s (原始格式)', 'i_theme'), esc_url($source_url));
+    // 使用通用描述
+    $attachment_title = preg_replace('/\\.[^.]+$/', '', $unique_filename);
+    $attachment_content = sprintf(__('Favicon for %s', 'i_theme'), esc_url($source_url)); 
 
     $attachment = array(
         'guid'           => $upload_dir['url'] . '/' . $unique_filename,
-        'post_mime_type' => $mime_type,
+        'post_mime_type' => $mime_type, // 使用检测到的 MIME 类型
         'post_title'     => $attachment_title,
         'post_content'   => $attachment_content,
         'post_status'    => 'inherit'
@@ -542,7 +486,7 @@ function io_save_icon_to_media_library($icon_data, $source_url, $filename) {
         return $attach_id;
     }
 
-    // 确保 image.php 加载以生成元数据
+    // 确保 image.php 加载以生成元数据 (对于非图像文件，这可能不会生成缩略图等)
     require_once(ABSPATH . 'wp-admin/includes/image.php');
     $attach_data = wp_generate_attachment_metadata($attach_id, $filepath);
     wp_update_attachment_metadata($attach_id, $attach_data);
