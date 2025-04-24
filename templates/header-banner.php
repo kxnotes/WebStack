@@ -31,7 +31,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }  ?>
       </ul>
       <ul class="user-info-menu list-inline list-unstyled">
         <li class="hidden-sm hidden-xs">
-            <a href="https://github.com/owen0o0/WebStack" target="_blank"><i class="fa fa-github"></i> GitHub</a>
+            <a href="https://github.com/kxnotes/WebStack" target="_blank"><i class="fa fa-github"></i> GitHub</a>
         </li>
       </ul>
     </div>
