@@ -179,33 +179,102 @@ function io_get_favicon($url, $post_id) {
     $final_url = '';
     $icon_url = false;
     $html_content = null; // Store HTML content to avoid multiple downloads
+    $debug_info = []; // 添加调试信息收集
+    
+    // 检测系统代理
+    $proxy_config = io_detect_system_proxy();
+    if ($proxy_config) {
+        $debug_info[] = "检测到系统代理: " . $proxy_config['type'] . "://" . $proxy_config['host'] . ":" . $proxy_config['port'];
+    } else {
+        $debug_info[] = "未检测到系统代理，使用直连";
+    }
 
     // --- 1. URL 预处理 ---
     if (strpos($url, '://') === false) {
         $url = 'http://' . $url;
     }
+    $debug_info[] = "初始 URL: " . $url;
 
     // --- 2. 使用 cURL 处理重定向并获取最终 URL ---
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_MAXREDIRS, 10); // 增加最大重定向次数
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30); // 增加超时时间
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 20);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
     curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36');
-    curl_setopt($ch, CURLOPT_HEADER, false); // Don't need header if we get body
+    curl_setopt($ch, CURLOPT_HEADER, false);
+    // 添加更多选项来处理复杂重定向
+    curl_setopt($ch, CURLOPT_AUTOREFERER, true);
+    curl_setopt($ch, CURLOPT_ENCODING, '');
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language: zh-CN,zh;q=0.9,en;q=0.8',
+        'Cache-Control: no-cache'
+    ]);
+    
+    // 如果检测到代理，配置 cURL 使用代理
+    if ($proxy_config) {
+        io_configure_curl_proxy($ch, $proxy_config);
+        $debug_info[] = "已配置 cURL 使用代理";
+    }
 
-    $content_or_header = curl_exec($ch); // Might be body now
+    $content_or_header = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $effective_url = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
+    $redirect_count = curl_getinfo($ch, CURLINFO_REDIRECT_COUNT);
     $curl_errno = curl_errno($ch);
+    $curl_error = curl_error($ch);
     curl_close($ch);
+    
+    $debug_info[] = "HTTP 状态码: " . $http_code;
+    $debug_info[] = "重定向次数: " . $redirect_count;
+    $debug_info[] = "最终 URL: " . $effective_url;
+    if ($curl_errno) {
+        $debug_info[] = "cURL 错误: " . $curl_error;
+    }
+    
+    // 特殊处理：如果重定向成功但目标网站无法访问
+    if ($curl_errno && $redirect_count > 0 && !empty($effective_url)) {
+        $debug_info[] = "检测到重定向成功但目标网站无法访问，尝试使用重定向前的域名";
+        
+        // 尝试使用原始域名的favicon
+        $original_parsed = parse_url($url);
+        if ($original_parsed && isset($original_parsed['host'])) {
+            $original_base = $original_parsed['scheme'] . '://' . $original_parsed['host'];
+            $debug_info[] = "尝试原始域名: " . $original_base;
+            
+            $favicon_paths = ['/favicon.ico', '/favicon.png'];
+            foreach ($favicon_paths as $path) {
+                $try_url = $original_base . $path;
+                $debug_info[] = "尝试原始域名 favicon: " . $try_url;
+                $icon_data = io_download_icon_data_with_proxy($try_url, $proxy_config);
+                if ($icon_data) {
+                    $debug_info[] = "从原始域名成功获取 favicon";
+                    $filename = basename($path);
+                    $icon_url = io_save_icon_to_media_library($icon_data, $url, $filename);
+                    if ($icon_url && !is_wp_error($icon_url)) {
+                        update_post_meta($post_id, '_thumbnail', esc_url_raw($icon_url));
+                        update_post_meta($post_id, '_final_url', esc_url_raw($effective_url)); // 仍记录重定向URL
+                        update_post_meta($post_id, '_favicon_debug', implode('; ', $debug_info));
+                        return $icon_url;
+                    }
+                }
+            }
+        }
+        
+        // 如果原始域名也失败，返回错误但包含重定向信息
+        return new WP_Error('redirect_target_unreachable', 
+            sprintf(__('重定向成功到 %s，但目标网站无法访问。原始网站也无可用图标。', 'i_theme'), $effective_url) . 
+            ' Debug: ' . implode('; ', $debug_info)
+        );
+    }
 
     if ($curl_errno) {
-        return new WP_Error('curl_error', sprintf(__('网络请求失败 (cURL Error: %s)。', 'i_theme'), curl_strerror($curl_errno)));
+        return new WP_Error('curl_error', sprintf(__('网络请求失败 (cURL Error: %s)。', 'i_theme'), $curl_error) . ' Debug: ' . implode('; ', $debug_info));
     }
 
     // Allow redirect codes, but fail on 4xx/5xx for the *final* URL
@@ -214,14 +283,15 @@ function io_get_favicon($url, $post_id) {
          // If we already got content, this error is final.
          if ($content_or_header === '' || $content_or_header === false) {
               // Re-request without NOBODY if the first check failed
+              $debug_info[] = "尝试重新请求";
               $ch = curl_init();
               // Set options again, but without NOBODY and HEADER=false
               curl_setopt($ch, CURLOPT_URL, $effective_url ?: $url); // Use effective_url if available
               curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
               curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Should land on final URL now
               curl_setopt($ch, CURLOPT_MAXREDIRS, 0);       // Don't redirect further
-              curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-              curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+              curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+              curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
               curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
               curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
               curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36');
@@ -230,28 +300,35 @@ function io_get_favicon($url, $post_id) {
               $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE); // Update http_code
               $effective_url = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL) ?: $effective_url; // Update effective_url
               curl_close($ch);
+              
+              $debug_info[] = "重新请求后 HTTP 状态码: " . $http_code;
+              $debug_info[] = "重新请求后最终 URL: " . $effective_url;
 
               if ($http_code >= 400) {
-                   return new WP_Error('http_error_final', sprintf(__('最终网址返回错误状态码: %d。', 'i_theme'), $http_code));
+                   return new WP_Error('http_error_final', sprintf(__('最终网址返回错误状态码: %d。', 'i_theme'), $http_code) . ' Debug: ' . implode('; ', $debug_info));
               }
          } else {
               // We had content from the first request, but it was an error page.
-               return new WP_Error('http_error_initial', sprintf(__('网址返回错误状态码: %d。', 'i_theme'), $http_code));
+               return new WP_Error('http_error_initial', sprintf(__('网址返回错误状态码: %d。', 'i_theme'), $http_code) . ' Debug: ' . implode('; ', $debug_info));
          }
     }
      $html_content = $content_or_header; // Store the fetched HTML
 
     if (empty($effective_url)) {
-        return new WP_Error('no_effective_url', __('无法确定最终有效网址。', 'i_theme'));
+        return new WP_Error('no_effective_url', __('无法确定最终有效网址。', 'i_theme') . ' Debug: ' . implode('; ', $debug_info));
     }
     $final_url = $effective_url;
+    
+    // 添加调试信息到 post meta
+    update_post_meta($post_id, '_favicon_debug', implode('; ', $debug_info));
     update_post_meta($post_id, '_final_url', esc_url_raw($final_url));
 
     $parsed_url = parse_url($final_url);
     if (!$parsed_url || !isset($parsed_url['scheme']) || !isset($parsed_url['host'])) {
-        return new WP_Error('invalid_final_url', __('最终网址格式无效。', 'i_theme'));
+        return new WP_Error('invalid_final_url', __('最终网址格式无效。', 'i_theme') . ' Debug: ' . implode('; ', $debug_info));
     }
     $base_url = rtrim($parsed_url['scheme'] . '://' . $parsed_url['host'], '/'); // Ensure no trailing slash
+    $debug_info[] = "基础 URL: " . $base_url;
 
     // --- 3. 尝试获取 Favicon (按优先级) ---
 
@@ -270,14 +347,22 @@ function io_get_favicon($url, $post_id) {
     // 策略 1: 尝试根目录下的常见 Favicon 文件
     foreach ($favicon_paths as $path) {
         $try_url = $base_url . $path;
-        $icon_data = io_download_icon_data($try_url);
+        $debug_info[] = "尝试 favicon 路径: " . $try_url;
+        $icon_data = io_download_icon_data_with_proxy($try_url, $proxy_config);
         if ($icon_data) {
+            $debug_info[] = "成功获取 favicon 数据: " . strlen($icon_data) . " bytes";
             $filename = basename($path);
             $icon_url = io_save_icon_to_media_library($icon_data, $final_url, $filename);
             if ($icon_url && !is_wp_error($icon_url)) {
+                $debug_info[] = "成功保存到媒体库: " . $icon_url;
                 update_post_meta($post_id, '_thumbnail', esc_url_raw($icon_url));
+                update_post_meta($post_id, '_favicon_debug', implode('; ', $debug_info)); // 更新调试信息
                 return $icon_url; // 成功
+            } else {
+                $debug_info[] = "保存到媒体库失败: " . (is_wp_error($icon_url) ? $icon_url->get_error_message() : '未知错误');
             }
+        } else {
+            $debug_info[] = "获取 favicon 数据失败";
         }
     }
 
@@ -292,7 +377,7 @@ function io_get_favicon($url, $post_id) {
             foreach ($link_tags as $tag_url) {
                 $absolute_tag_url = io_make_absolute_url($tag_url, $base_url, $final_url); // Reuse existing function
                 if ($absolute_tag_url) {
-                    $icon_data = io_download_icon_data($absolute_tag_url);
+                    $icon_data = io_download_icon_data_with_proxy($absolute_tag_url, $proxy_config);
                     if ($icon_data) {
                         $filename = basename(parse_url($absolute_tag_url, PHP_URL_PATH)) ?: 'favicon_from_link.png';
                         $icon_url = io_save_icon_to_media_library($icon_data, $final_url, $filename);
@@ -312,7 +397,7 @@ function io_get_favicon($url, $post_id) {
         if ($og_image_url) {
             $absolute_og_url = io_make_absolute_url($og_image_url, $base_url, $final_url);
             if ($absolute_og_url) {
-                $icon_data = io_download_icon_data($absolute_og_url);
+                $icon_data = io_download_icon_data_with_proxy($absolute_og_url, $proxy_config);
                 if ($icon_data) {
                     $filename = basename(parse_url($absolute_og_url, PHP_URL_PATH)) ?: 'og_image_logo.png';
                     $icon_url = io_save_icon_to_media_library($icon_data, $final_url, $filename);
@@ -333,7 +418,7 @@ function io_get_favicon($url, $post_id) {
     ];
     foreach ($logo_paths as $path) {
         $try_url = $base_url . $path;
-        $icon_data = io_download_icon_data($try_url);
+        $icon_data = io_download_icon_data_with_proxy($try_url, $proxy_config);
         if ($icon_data) {
             $filename = basename($path);
             $icon_url = io_save_icon_to_media_library($icon_data, $final_url, $filename);
@@ -347,8 +432,10 @@ function io_get_favicon($url, $post_id) {
 
     // --- 5. 获取彻底失败 ---
     // 如果所有策略都失败了
+    $debug_info[] = "所有策略都失败";
+    update_post_meta($post_id, '_favicon_debug', implode('; ', $debug_info)); // 保存最终调试信息
     // update_post_meta($post_id, '_thumbnail', $default_ico); // Optionally set to default on failure
-    return new WP_Error('fetch_failed', __('未能通过任何策略找到或获取有效的图标/Logo。', 'i_theme'));
+    return new WP_Error('fetch_failed', __('未能通过任何策略找到或获取有效的图标/Logo。', 'i_theme') . ' Debug: ' . implode('; ', $debug_info));
 }
 
 /**
@@ -540,4 +627,175 @@ function io_make_absolute_url($relative_url, $base_url, $source_url) {
     }
 
     return $absolute_path;
+}
+
+/**
+ * 检测系统代理设置
+ */
+function io_detect_system_proxy() {
+    $proxy_config = null;
+    
+    // 检测 Windows 系统代理
+    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+        // 检济 HTTP_PROXY 环境变量
+        $http_proxy = getenv('HTTP_PROXY') ?: getenv('http_proxy');
+        $https_proxy = getenv('HTTPS_PROXY') ?: getenv('https_proxy');
+        
+        if ($http_proxy || $https_proxy) {
+            $proxy_url = $https_proxy ?: $http_proxy;
+            $proxy_config = io_parse_proxy_url($proxy_url);
+        }
+        
+        // 如果环境变量没有，尝试检测 Windows 注册表
+        if (!$proxy_config) {
+            $proxy_config = io_detect_windows_registry_proxy();
+        }
+    } else {
+        // Linux/Unix 系统检测
+        $http_proxy = getenv('HTTP_PROXY') ?: getenv('http_proxy');
+        $https_proxy = getenv('HTTPS_PROXY') ?: getenv('https_proxy');
+        
+        if ($http_proxy || $https_proxy) {
+            $proxy_url = $https_proxy ?: $http_proxy;
+            $proxy_config = io_parse_proxy_url($proxy_url);
+        }
+    }
+    
+    return $proxy_config;
+}
+
+/**
+ * 解析代理 URL
+ */
+function io_parse_proxy_url($proxy_url) {
+    if (empty($proxy_url)) return null;
+    
+    $parsed = parse_url($proxy_url);
+    if (!$parsed || !isset($parsed['host'])) return null;
+    
+    return [
+        'type' => isset($parsed['scheme']) ? $parsed['scheme'] : 'http',
+        'host' => $parsed['host'],
+        'port' => isset($parsed['port']) ? $parsed['port'] : 8080,
+        'user' => isset($parsed['user']) ? $parsed['user'] : null,
+        'pass' => isset($parsed['pass']) ? $parsed['pass'] : null
+    ];
+}
+
+/**
+ * 检测 Windows 注册表中的代理设置
+ */
+function io_detect_windows_registry_proxy() {
+    if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') return null;
+    
+    try {
+        // 尝试使用 PowerShell 检测代理设置
+        $cmd = 'powershell -Command "Get-ItemProperty -Path \'HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings\' -Name ProxyEnable,ProxyServer 2>$null | Select-Object ProxyEnable,ProxyServer | ConvertTo-Json"';
+        $output = shell_exec($cmd);
+        
+        if ($output) {
+            $data = json_decode(trim($output), true);
+            if ($data && isset($data['ProxyEnable']) && $data['ProxyEnable'] == 1 && !empty($data['ProxyServer'])) {
+                $proxy_server = $data['ProxyServer'];
+                
+                // 处理 host:port 格式
+                if (strpos($proxy_server, ':') !== false) {
+                    list($host, $port) = explode(':', $proxy_server, 2);
+                    return [
+                        'type' => 'http',
+                        'host' => trim($host),
+                        'port' => intval(trim($port)),
+                        'user' => null,
+                        'pass' => null
+                    ];
+                }
+            }
+        }
+    } catch (Exception $e) {
+        // 忽略错误，返回 null
+    }
+    
+    return null;
+}
+
+/**
+ * 为 cURL 配置代理
+ */
+function io_configure_curl_proxy($ch, $proxy_config) {
+    if (!$proxy_config || !is_resource($ch)) return;
+    
+    // 设置代理服务器
+    curl_setopt($ch, CURLOPT_PROXY, $proxy_config['host'] . ':' . $proxy_config['port']);
+    
+    // 设置代理类型
+    switch (strtolower($proxy_config['type'])) {
+        case 'socks5':
+            curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
+            break;
+        case 'socks4':
+            curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS4);
+            break;
+        case 'http':
+        case 'https':
+        default:
+            curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+            break;
+    }
+    
+    // 设置代理认证（如果有）
+    if (!empty($proxy_config['user']) && !empty($proxy_config['pass'])) {
+        curl_setopt($ch, CURLOPT_PROXYUSERPWD, $proxy_config['user'] . ':' . $proxy_config['pass']);
+    }
+    
+    // 设置代理超时
+    curl_setopt($ch, CURLOPT_PROXYPORT, $proxy_config['port']);
+}
+
+/**
+ * 增强的下载图标数据函数（支持代理）
+ */
+function io_download_icon_data_with_proxy($icon_url, $proxy_config = null) {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $icon_url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36');
+    
+    // 如果有代理配置，使用代理
+    if ($proxy_config) {
+        io_configure_curl_proxy($ch, $proxy_config);
+    }
+    
+    $body = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $content_type = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+    $curl_errno = curl_errno($ch);
+    curl_close($ch);
+    
+    if ($curl_errno) {
+        return false; // 下载失败
+    }
+
+    if ($http_code >= 400) {
+        return false; // HTTP 错误
+    }
+
+    if (strpos($content_type, 'image') === false) {
+         // 检查是否是 ICO 文件（Content-Type 可能不规范）
+        $path_info = pathinfo(parse_url($icon_url, PHP_URL_PATH));
+        if (!isset($path_info['extension']) || strtolower($path_info['extension']) !== 'ico'){
+             return false; // 不是图片类型，也不是 .ico 文件
+        }
+    }
+
+    if (empty($body)) {
+        return false; // 内容为空
+    }
+
+    return $body;
 }

@@ -69,6 +69,7 @@ jQuery(document).ready(function($) {
                 site_url: siteUrl
             },
             success: function(response) {
+                console.log('AJAX Success Response:', response); // 添加调试日志
                 if (response.success) {
                     statusMessage.css('color', 'green').text(response.data.message);
                     // 更新预览图
@@ -76,11 +77,17 @@ jQuery(document).ready(function($) {
                         previewImg.attr('src', response.data.favicon_url);
                         // 新增：更新 _thumbnail 输入框的值，确保保存时提交正确数据
                         $('input[name="sites_meta[_thumbnail]"]').val(response.data.favicon_url);
+                        console.log('Updated thumbnail input with:', response.data.favicon_url); // 调试日志
                         // 可选：尝试更新 CS Framework 的 _thumbnail 预览 (如果知道其 DOM 结构)
                         // 例如: $('input[name="_thumbnail"]').val(response.data.favicon_url);
                         // $('.cs-field-image .cs-preview img').attr('src', response.data.favicon_url);
                     }
+                    // 显示最终URL（如果有）
+                    if (response.data.final_url) {
+                        statusMessage.append('<br><small>最终URL: ' + response.data.final_url + '</small>');
+                    }
                 } else {
+                    console.log('AJAX Error Response:', response); // 添加调试日志
                     statusMessage.css('color', 'red').text('错误: ' + (response.data.message || '未知错误'));
                 }
             },

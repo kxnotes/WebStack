@@ -440,6 +440,10 @@ function io_favicon_metabox_content($post) {
 
     // 获取目标网址 (_sites_link 字段)
     $site_url = get_post_meta($post->ID, '_sites_link', true);
+    
+    // 获取调试信息
+    $debug_info = get_post_meta($post->ID, '_favicon_debug', true);
+    $final_url = get_post_meta($post->ID, '_final_url', true);
 
     ?>
     <div id="favicon-fetcher-wrapper">
@@ -457,6 +461,19 @@ function io_favicon_metabox_content($post) {
         </button>
         <span id="favicon-fetch-spinner" class="spinner" style="float: none; vertical-align: middle;"></span>
         <div id="favicon-status-message" style="margin-top: 8px;"></div>
+        
+        <?php if ($final_url): ?>
+        <div style="margin-top: 10px; font-size: 12px; color: #666;">
+            <strong>最终 URL:</strong> <code><?php echo esc_html($final_url); ?></code>
+        </div>
+        <?php endif; ?>
+        
+        <?php if ($debug_info): ?>
+        <div style="margin-top: 10px; padding: 8px; background: #f5f5f5; border-left: 3px solid #0073aa; font-size: 11px;">
+            <strong>调试信息:</strong><br>
+            <?php echo esc_html($debug_info); ?>
+        </div>
+        <?php endif; ?>
     </div>
     <?php
 }
