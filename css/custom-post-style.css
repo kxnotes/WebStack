@@ -1,0 +1,137 @@
+
+/* Article Content Styles */
+.panel-body .col-sm-12 {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.8;
+    color: #333;
+    font-size: 16px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Headings */
+.panel-body h1, .panel-body h2, .panel-body h3, .panel-body h4, .panel-body h5, .panel-body h6 {
+    color: #1a1a1a;
+    font-weight: 600;
+    margin-top: 2.5em;
+    margin-bottom: 1em;
+    line-height: 1.3;
+}
+
+.panel-body h1 { font-size: 2.25em; }
+.panel-body h2 { font-size: 1.75em; border-bottom: 1px solid #eaeaea; padding-bottom: 0.3em; }
+.panel-body h3 { font-size: 1.5em; }
+.panel-body h4 { font-size: 1.25em; }
+
+/* Paragraphs */
+.panel-body p {
+    margin-bottom: 1.6em;
+    text-align: justify;
+}
+
+/* Lists */
+.panel-body ul, .panel-body ol {
+    margin-bottom: 1.6em;
+    padding-left: 2em;
+}
+
+.panel-body li {
+    margin-bottom: 0.5em;
+}
+
+/* Blockquotes */
+.panel-body blockquote {
+    border-left: 4px solid #007bff;
+    background-color: #f8f9fa;
+    margin: 2em 0;
+    padding: 1em 1.5em;
+    color: #555;
+    font-style: italic;
+    border-radius: 0 4px 4px 0;
+}
+
+/* Code Blocks */
+.panel-body pre {
+    background: #f6f8fa;
+    border-radius: 6px;
+    padding: 16px;
+    margin: 1.6em 0;
+    overflow-x: auto;
+    font-size: 14px;
+    line-height: 1.45;
+    border: 1px solid #e1e4e8;
+}
+
+.panel-body code {
+    background-color: rgba(27,31,35,0.05);
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 85%;
+    color: #d63384;
+}
+
+.panel-body pre code {
+    background-color: transparent;
+    padding: 0;
+    color: inherit;
+    font-size: 100%;
+}
+
+/* Images */
+.panel-body img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 2em auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.panel-body figcaption {
+    text-align: center;
+    color: #6c757d;
+    font-size: 0.9em;
+    margin-top: 0.5em;
+}
+
+/* Tables */
+.panel-body table {
+    width: 100%;
+    margin-bottom: 1.6em;
+    border-collapse: collapse;
+    border-spacing: 0;
+    overflow-x: auto;
+    display: block;
+}
+
+.panel-body th, .panel-body td {
+    padding: 12px;
+    border: 1px solid #e9ecef;
+    text-align: left;
+}
+
+.panel-body th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+/* Links */
+.panel-body a {
+    color: #007bff;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s ease;
+}
+
+.panel-body a:hover {
+    color: #0056b3;
+    border-bottom-color: #0056b3;
+}
+
+/* Horizontal Rule */
+.panel-body hr {
+    margin: 3em 0;
+    border: 0;
+    border-top: 1px solid #eaeaea;
+}

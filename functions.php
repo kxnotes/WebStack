@@ -24,11 +24,14 @@ function fanly_remove_block_library_css() {
 }
 
 /**
- * 加载顶部菜单样式
+ * 加载顶部菜单样式和文章样式
  */
-add_action( 'wp_enqueue_scripts', 'io_enqueue_top_nav_style' );
-function io_enqueue_top_nav_style() {
+add_action( 'wp_enqueue_scripts', 'io_enqueue_custom_styles' );
+function io_enqueue_custom_styles() {
     wp_enqueue_style( 'custom-top-nav', get_template_directory_uri() . '/css/custom-top-nav.css', array(), '1.0' );
+    if ( is_single() ) {
+        wp_enqueue_style( 'custom-post-style', get_template_directory_uri() . '/css/custom-post-style.css', array(), '1.0' );
+    }
 }
 
 /**
