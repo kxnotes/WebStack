@@ -79,7 +79,7 @@
 }
 
 /* Images */
-.panel-body img {
+.panel-body img:not(.img-cover) {
     max-width: 100%;
     height: auto;
     display: block;
@@ -117,14 +117,14 @@
 }
 
 /* Links */
-.panel-body a {
+.panel-body a:not(.btn) {
     color: #007bff;
     text-decoration: none;
     border-bottom: 1px solid transparent;
     transition: border-color 0.2s ease;
 }
 
-.panel-body a:hover {
+.panel-body a:not(.btn):hover {
     color: #0056b3;
     border-bottom-color: #0056b3;
 }
