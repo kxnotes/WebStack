@@ -46,6 +46,7 @@ function post_type_sites() {
 		'has_archive'        => false,
 		'hierarchical'       => false,
 		'menu_position'      => 10,
+        'show_in_rest'       => true,
 		'supports'           => array( 'title',  'author', 'editor', 'comments', 'custom-fields' )//'editor','excerpt',
 	);
 
