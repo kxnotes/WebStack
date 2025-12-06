@@ -24,6 +24,14 @@ function fanly_remove_block_library_css() {
 }
 
 /**
+ * 加载顶部菜单样式
+ */
+add_action( 'wp_enqueue_scripts', 'io_enqueue_top_nav_style' );
+function io_enqueue_top_nav_style() {
+    wp_enqueue_style( 'custom-top-nav', get_template_directory_uri() . '/css/custom-top-nav.css', array(), '1.0' );
+}
+
+/**
  * 1. 注册自定义图片尺寸
  *
  * 注册一个宽度为 300px 的自定义尺寸，高度设为极大值以保持比例。
