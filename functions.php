@@ -28,10 +28,9 @@ function fanly_remove_block_library_css() {
  */
 add_action( 'wp_enqueue_scripts', 'io_enqueue_custom_styles' );
 function io_enqueue_custom_styles() {
-    $theme_version = wp_get_theme()->get( 'Version' ) . '.' . time(); // 添加时间戳作为版本号，强制刷新缓存
-    wp_enqueue_style( 'custom-top-nav', get_template_directory_uri() . '/css/custom-top-nav.css', array(), $theme_version );
+    wp_enqueue_style( 'custom-top-nav', get_template_directory_uri() . '/css/custom-top-nav.css', array(), '1.0' );
     if ( is_single() ) {
-        wp_enqueue_style( 'custom-post-style', get_template_directory_uri() . '/css/custom-post-style.css', array(), $theme_version );
+        wp_enqueue_style( 'custom-post-style', get_template_directory_uri() . '/css/custom-post-style.css', array(), '1.0' );
     }
 }
 
